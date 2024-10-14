@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String @id @default(uuid())
+  discordId String @unique @map("discord_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  interaction Interaction[]
+
+  @@map("users")
+}
+
+model Interaction {
+  id String @id @default(uuid())
+
+  userId        String  @map("user_id")
+  serverId      String  @map("server_id")
+  channelId     String  @unique @map("channel_id")
+  transactionId String? @unique @map("transaction_id")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at")
+
+  chatTranscript Json? @map("chat_transcript")
+
+  channel     Channel      @relation(fields: [channelId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  user   User   @relation(fields: [userId], references: [id])
+  server Server @relation(fields: [serverId], references: [id])
+
+  @@map("interaction")
+}
+
+model Server {
+  id        String @id @default(uuid())
+  discordId String @unique @map("discord_id")
+
+  destinationWallet          String  @map("destination_wallet")
+  latestServerConfigurtionId String? @map("server_configuration_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  interaction        Interaction[]
+  serverConfigurtion ServerConfigurtion? @relation(fields: [latestServerConfigurtionId], references: [id])
+
+  @@map("server")
+}
+
+model Channel {
+  id        String @id @default(uuid())
+  discordId String @unique @map("discord_id")
+
+  name String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at")
+
+  interaction Interaction?
+
+  @@map("channel")
+}
+
+model Transaction {
+  id String @id @default(uuid())
+
+  currency String
+  amount   Float
+  isPaid   Boolean @default(false) @map("is_paid")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  interaction Interaction?
+
+  @@map("transaction")
+}
+
+model ServerConfigurtion {
+  id String @id @default(uuid())
+
+  serverId String @map("server_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  server Server[]
+
+  @@map("server_configuration")
+}
